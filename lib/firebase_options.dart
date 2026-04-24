@@ -41,7 +41,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyALlvsgkrrH1r9XJfVzK4nXypq34G9HtCg',
+    apiKey: '',
     appId: '1:190872845564:web:caccb351b8eb356ac0eb79',
     messagingSenderId: '190872845564',
     projectId: 'bank-security-final',
@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDD9t5GirTR8sve35qKw2-R7bwLu2g7H_M',
+    apiKey: '',
     appId: '1:190872845564:android:38498aec0122069ac0eb79',
     messagingSenderId: '190872845564',
     projectId: 'bank-security-final',
