@@ -59,7 +59,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBlWdWuGeExz1frKA2TlcMW0ZIF4bXEsAM',
+    apiKey: '',
     appId: '1:190872845564:ios:cdf3ecf6c0824c04c0eb79',
     messagingSenderId: '190872845564',
     projectId: 'bank-security-final',
