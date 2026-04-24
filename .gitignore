@@ -1,14 +1,17 @@
-echo android/app/src/main/bank-security-final-firebase-adminsdk-fbsvc-d03e680945.json >> .gitignore
-echo firebase-service-account.json >> .gitignore
-build/
 .dart_tool/
-.gradle/
-node_modules/
-firebase-service-account.json
-*.jks
-*.keystore
-key.properties
-local.properties
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+*.log
+android/hs_err_pid*.log
+android/replay_pid*.log
+hs_err_pid*.log
+
 .env
-android/app/src/main/bank-security-final-firebase-adminsdk-fbsvc-d03e680945.json
+*.envnode_modules/
+*firebase-adminsdk*.json
 firebase-service-account.json
