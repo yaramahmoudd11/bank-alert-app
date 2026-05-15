@@ -1,27 +1,30 @@
-import 'dart:io' show Platform;
-import 'splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'splash_screen.dart';
-import 'alerts_page.dart';
 import 'firebase_options.dart';
 import 'notification_service.dart';
-
 Future<void> initFirebase() async {
   if (Firebase.apps.isNotEmpty) return;
 
-  if (!kIsWeb && Platform.isAndroid) {
-    await Firebase.initializeApp();
-  } else {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  try {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      await Firebase.initializeApp();
+    } else {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } on FirebaseException catch (e) {
+    if (e.code == 'duplicate-app') {
+      debugPrint('Firebase already initialized');
+    } else {
+      rethrow;
+    }
   }
 }
-
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await initFirebase();

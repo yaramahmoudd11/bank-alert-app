@@ -7,6 +7,10 @@ serve(async (req) => {
     const payload = await req.json();
     const alert = payload.record;
 
+    if (!alert) {
+      return new Response("No alert record found", { status: 400 });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -14,21 +18,43 @@ serve(async (req) => {
 
     const { data: devices, error } = await supabase
       .from("device_tokens")
-      .select("token");
+      .select("id, token");
 
-    if (error) throw error;
-
-    if (!devices || devices.length === 0) {
-      return new Response("No devices found", { status: 200 });
+    if (error) {
+      console.log("Supabase device_tokens error:", error);
+      throw error;
     }
 
-    const accessToken = await getAccessToken();
-    const projectId = Deno.env.get("FIREBASE_PROJECT_ID")!;
+    if (!devices || devices.length === 0) {
+      console.log("No device tokens found");
+      return new Response("No device tokens found", { status: 200 });
+    }
 
-    const title = getTitle(alert.category);
-    const body = alert.message ?? "New security alert received";
+    const serviceAccountBase64 = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_BASE64")!;
+    const serviceAccountText = atob(serviceAccountBase64);
+    const serviceAccount = JSON.parse(serviceAccountText);
+    console.log("ENV FIREBASE_PROJECT_ID:", Deno.env.get("FIREBASE_PROJECT_ID"));
+    console.log("SERVICE ACCOUNT PROJECT:", serviceAccount.project_id);
+    console.log("SERVICE ACCOUNT EMAIL:", serviceAccount.client_email);
+    const projectId = serviceAccount.project_id;
+
+    console.log("=== DEBUG ===");
+    console.log("Project ID from service account:", projectId);
+    console.log("Client email:", serviceAccount.client_email);
+    console.log("Number of devices:", devices.length);
+    console.log("=============");
+
+    const accessToken = await getAccessToken(serviceAccount);
+
+    const title = getTitle(String(alert.category ?? ""));
+    const body = String(alert.message ?? "New security alert received");
+
+    let successCount = 0;
+    let failCount = 0;
 
     for (const device of devices) {
+      console.log(`Sending to token id ${device.id}, token: ${device.token.substring(0, 20)}...`);
+
       const res = await fetch(
         `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
         {
@@ -69,23 +95,28 @@ serve(async (req) => {
         }
       );
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.log("FCM error:", errorText);
+      const resultText = await res.text();
+
+      if (res.ok) {
+        successCount++;
+        console.log(`FCM sent successfully to token id ${device.id}:`, resultText);
+      } else {
+        failCount++;
+        console.log(`FCM error for token id ${device.id}:`, resultText);
       }
     }
 
-    return new Response("Notifications sent", { status: 200 });
+    return new Response(
+      `Notifications done. Success: ${successCount}, Failed: ${failCount}`,
+      { status: 200 }
+    );
   } catch (e) {
+    console.log("Function error:", e);
     return new Response(`Error: ${e.message}`, { status: 500 });
   }
 });
 
-async function getAccessToken() {
-  const serviceAccountBase64 = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_BASE64")!;
-  const serviceAccountText = atob(serviceAccountBase64);
-  const serviceAccount = JSON.parse(serviceAccountText);
-
+async function getAccessToken(serviceAccount: any) {
   const privateKey = await jose.importPKCS8(
     serviceAccount.private_key,
     "RS256"
